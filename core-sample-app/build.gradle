@@ -3,57 +3,46 @@ apply from: '../dependencies.gradle'
 apply plugin: 'com.getkeepsafe.dexcount'
 apply plugin: 'kotlin-android'
 
+plugins {
+    id 'com.android.application'
+}
+
 android {
-  compileSdkVersion versions.compileSdk
+    namespace 'com.example.hybridmusic' // ⚠️ 请改为你的实际包名
+    compileSdk 34
 
-  defaultConfig {
-    minSdkVersion versions.minSdk
-    targetSdkVersion versions.compileSdk
-    versionCode versions.publishVersionCode_core
-    versionName versions.publishVersion_core
-  }
+    defaultConfig {
+        applicationId "com.example.hybridmusic" // ⚠️ 请改为你的实际包名
+        minSdk 21 // 库要求的最低版本
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
 
-  buildTypes {
-    release {
-      minifyEnabled true
-      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-  }
 
-  packagingOptions {
-    resources {
-      // this is needed because I'm importing 2 modules called "core" (core and com.psoffritti.librarysampleapptemplate:core) (https://discuss.kotlinlang.org/t/disable-meta-inf-generation-in-gradle-android-project/3830)
-      excludes += ['META-INF/core_release.kotlin_module']
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
     }
-  }
-
-  namespace 'com.pierfrancescosoffritti.aytplayersample'
-
-  compileOptions {
-    sourceCompatibility JavaVersion.VERSION_1_8
-    targetCompatibility JavaVersion.VERSION_1_8
-  }
-  kotlinOptions {
-    jvmTarget = '1.8'
-  }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
-  testImplementation "junit:junit:$versions.junit"
-  androidTestImplementation "androidx.test:runner:$versions.runner"
-  androidTestImplementation "androidx.test.espresso:espresso-core:$versions.espressoCore"
-
-  implementation project(':core')
-  implementation project(':custom-ui')
-  implementation project(':chromecast-sender')
-
-  implementation "androidx.appcompat:appcompat:$versions.appcompat"
-  implementation "androidx.recyclerview:recyclerview:$versions.androidxRecyclerView"
-  implementation "androidx.constraintlayout:constraintlayout:$versions.androidxConstraintLayout"
-
-  implementation "androidx.mediarouter:mediarouter:$versions.androidxMediarouter"
-
-  implementation "com.github.PierfrancescoSoffritti:library-sample-app-template:$versions.sampleAppTemplate"
-
-  debugImplementation "com.squareup.leakcanary:leakcanary-android:$versions.leakcanary"
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    
+    // --- 【关键】YouTube 播放器核心库 ---
+    // 引用自 README.md
+    implementation 'com.pierfrancescosoffritti.androidyoutubeplayer:core:13.0.0'
+    
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
