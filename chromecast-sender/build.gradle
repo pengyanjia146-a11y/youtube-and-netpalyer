@@ -1,0 +1,46 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply from: '../dependencies.gradle'
+
+android {
+  compileSdkVersion versions.compileSdk
+
+  defaultConfig {
+    minSdkVersion versions.minSdk
+    targetSdkVersion versions.compileSdk
+  }
+
+  sourceSets {
+    main.res.srcDirs = [
+            'src/main/res',
+            'src/main/res-public'
+    ]
+  }
+  namespace 'com.pierfrancescosoffritti.androidyoutubeplayer.chromecast.chromecastsender'
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+  kotlinOptions {
+    jvmTarget = '1.8'
+  }
+}
+
+dependencies {
+  testImplementation "junit:junit:$versions.junit"
+  androidTestImplementation "androidx.test:runner:$versions.runner"
+  androidTestImplementation "androidx.test.espresso:espresso-core:$versions.espressoCore"
+
+  api project(':core')
+  api "com.google.android.gms:play-services-cast-framework:$versions.googlePlayServicesCastFramework"
+}
+
+ext {
+  PUBLISH_GROUP_ID = 'com.pierfrancescosoffritti.androidyoutubeplayer'
+  PUBLISH_VERSION = versions.publishVersion_chromecast
+  PUBLISH_ARTIFACT_ID = 'chromecast-sender'
+  PUBLISH_DESCRIPTION = 'Extension for the android-youtube-player:core library, that enables Chromecast compatibility.'
+}
+
+apply from: "../scripts/publish-module.gradle"
