@@ -9,98 +9,41 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        
+
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
             android:label="@string/app_name"
+            android:exported="true" />
+
+        <activity
+            android:name=".examples.simpleExample.SimpleExampleActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
+            android:hardwareAccelerated="true"
+            android:label="混合播放器"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".examples.completeExample.CompleteExampleActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:hardwareAccelerated="true"
-            android:label="@string/complete_example" />
-        <activity
-            android:name=".examples.fragmentExample.FragmentExampleActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:hardwareAccelerated="true"
-            android:label="@string/fragment_example" />
-        <activity
-            android:name=".examples.recyclerViewExample.RecyclerViewActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:hardwareAccelerated="true"
-            android:label="@string/recycler_view_example" />
-        <activity
-            android:name=".examples.viewPagerExample.ViewPagerActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:hardwareAccelerated="true"
-            android:label="@string/view_pager_example" />
-        <activity
-            android:name=".examples.customUiExample.CustomUiActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:hardwareAccelerated="true"
-            android:label="@string/custom_ui_example" />
-        <activity
-            android:name=".examples.liveVideoExample.LiveVideoActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:hardwareAccelerated="true"
-            android:label="@string/live_video_example" />
-        <activity
-            android:name=".examples.playerStateExample.PlayerStateActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:hardwareAccelerated="true"
-            android:label="@string/player_status_example" />
-        <activity
-            android:name=".examples.pictureInPictureExample.PictureInPictureActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:hardwareAccelerated="true"
-            android:label="@string/picture_in_picture_example"
+        
+        <activity android:name=".examples.completeExample.CompleteExampleActivity" />
+        <activity android:name=".examples.fragmentExample.FragmentExampleActivity" />
+        <activity android:name=".examples.recyclerViewExample.RecyclerViewActivity" />
+        <activity android:name=".examples.viewPagerExample.ViewPagerActivity" />
+        <activity android:name=".examples.customUiExample.CustomUiActivity" />
+        <activity android:name=".examples.liveVideoExample.LiveVideoActivity" />
+        <activity android:name=".examples.playerStateExample.PlayerStateActivity" />
+        <activity android:name=".examples.pictureInPictureExample.PictureInPictureActivity"
             android:resizeableActivity="true"
             android:supportsPictureInPicture="true" />
-        <activity
-            android:name=".examples.iFramePlayerOptionsExample.IFramePlayerOptionsExampleActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:hardwareAccelerated="true"
-            android:label="@string/iframe_player_options_example" />
-        <activity
-            android:name=".examples.playlistExample.PlaylistExampleActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:hardwareAccelerated="true"
-            android:label="@string/playlist_example" />
-        <activity
-            android:name=".examples.defaultCustomUiExample.DefaultCustomUiExampleActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:hardwareAccelerated="true"
-            android:label="@string/default_custom_ui_example" />
-        <activity
-            android:name=".examples.chromecastExample.ChromeCastExampleActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:hardwareAccelerated="true"
-            android:label="@string/chromecast_example" />
-        
-        <activity
-            android:name=".examples.simpleExample.SimpleExampleActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:hardwareAccelerated="true"
-            android:label="@string/simple_example" />
-            
-        <activity
-            android:name=".examples.fullscreenExample.FullscreenExampleActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:hardwareAccelerated="true"
-            android:label="@string/fullscreen_example" />
-        <activity
-            android:name=".examples.noLifecycleObserverExample.NoLifecycleObserverExampleActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
-            android:hardwareAccelerated="true"
-            android:label="@string/no_lifecycle_observer_example" />
-
+        <activity android:name=".examples.iFramePlayerOptionsExample.IFramePlayerOptionsExampleActivity" />
+        <activity android:name=".examples.playlistExample.PlaylistExampleActivity" />
+        <activity android:name=".examples.defaultCustomUiExample.DefaultCustomUiExampleActivity" />
+        <activity android:name=".examples.chromecastExample.ChromeCastExampleActivity" />
+        <activity android:name=".examples.fullscreenExample.FullscreenExampleActivity" />
+        <activity android:name=".examples.noLifecycleObserverExample.NoLifecycleObserverExampleActivity" />
         <activity android:name="com.psoffritti.librarysampleapptemplate.core.SampleAppTemplateActivity" />
 
         <meta-data
