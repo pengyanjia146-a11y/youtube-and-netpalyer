@@ -13,6 +13,7 @@ import androidx.cardview.widget.CardView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
@@ -40,7 +41,7 @@ class BasicExampleActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private val httpClient = OkHttpClient()
     
-    // --- 关键修复：这里必须是 var，不能是 val ---
+    // 修复：必须使用 var，因为状态会随播放/暂停改变
     private var isPlaying = false
     private var currentMode = MODE_NONE
 
@@ -83,12 +84,13 @@ class BasicExampleActivity : AppCompatActivity() {
             override fun onReady(youTubePlayer: YouTubePlayer) {
                 activeYouTubePlayer = youTubePlayer
             }
-            override fun onStateChange(youTubePlayer: YouTubePlayer, state: com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerState) {
-                if (state == com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerState.PLAYING) {
-                    isPlaying = true // 修复点：修改 var 变量
+
+            override fun onStateChange(youTubePlayer: YouTubePlayer, state: PlayerConstants.PlayerState) {
+                if (state == PlayerConstants.PlayerState.PLAYING) {
+                    isPlaying = true
                     updatePlayIcon(true)
-                } else if (state == com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerState.PAUSED) {
-                    isPlaying = false // 修复点：修改 var 变量
+                } else if (state == PlayerConstants.PlayerState.PAUSED) {
+                    isPlaying = false
                     updatePlayIcon(false)
                 }
             }
@@ -127,9 +129,12 @@ class BasicExampleActivity : AppCompatActivity() {
         val query = searchInput.text.toString().trim()
         if (query.isEmpty()) return
 
+        // Hide keyboard
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(searchInput.windowToken, 0)
 
+        // Simple check to distinguish YouTube ID vs Search Term
+        // Note: Logic can be improved (e.g., regex)
         if (query.startsWith("yt:") || query.length == 11) {
             val videoId = if (query.startsWith("yt:")) query.substring(3) else query
             switchToYouTubeMode(videoId)
@@ -140,7 +145,10 @@ class BasicExampleActivity : AppCompatActivity() {
 
     private fun switchToYouTubeMode(videoId: String) {
         currentMode = MODE_YT
-        mediaPlayer?.pause()
+        // Stop NetEase player if playing
+        if (mediaPlayer?.isPlaying == true) {
+            mediaPlayer?.pause()
+        }
         
         youtubeView.visibility = View.VISIBLE
         neteaseCard.visibility = View.GONE
@@ -161,6 +169,7 @@ class BasicExampleActivity : AppCompatActivity() {
         
         updateMetadata("Searching...", keyword)
 
+        // Netease Cloud Music Search API (Unofficial)
         val searchUrl = "https://music.163.com/api/search/get/web?s=$keyword&type=1&offset=0&total=true&limit=1"
         val request = Request.Builder()
             .url(searchUrl)
@@ -190,6 +199,7 @@ class BasicExampleActivity : AppCompatActivity() {
                         val artistName = if (artists.length() > 0) artists.getJSONObject(0).getString("name") else "Unknown"
                         val album = song.getJSONObject("album")
                         val coverUrl = album.getString("picUrl")
+                        // MP3 URL (May not work for VIP songs)
                         val playUrl = "http://music.163.com/song/media/outer/url?id=$songId.mp3"
 
                         runOnUiThread {
@@ -219,8 +229,10 @@ class BasicExampleActivity : AppCompatActivity() {
                 updatePlayIcon(true)
             }
 
+            // Load Cover
             Glide.with(this).load(coverUrl).into(albumCover)
             
+            // Load Blur Background
             try {
                 Glide.with(this)
                     .load(coverUrl)
