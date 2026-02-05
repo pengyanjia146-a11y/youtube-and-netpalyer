@@ -1,5 +1,6 @@
 package com.pierfrancescosoffritti.androidyoutubeplayer.chromecast.sampleapp.examples.basicExample
 
+import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Bundle
@@ -22,7 +23,7 @@ import java.io.IOException
 
 class BasicExampleActivity : AppCompatActivity() {
 
-    // --- UI Components ---
+    // --- UI 组件 (lateinit var 允许稍后初始化) ---
     private lateinit var youtubeView: YouTubePlayerView
     private lateinit var neteaseCard: CardView
     private lateinit var bgImage: ImageView
@@ -34,14 +35,15 @@ class BasicExampleActivity : AppCompatActivity() {
     private lateinit var playBtn: ImageView
     private lateinit var seekBar: SeekBar
 
-    // --- Logic Components ---
-    private var activeYouTubePlayer: YouTubePlayer? = null
+    // --- 核心逻辑组件 ---
+    // 必须是 var，因为我们会赋值为 null 或具体对象
+    private var activeYouTubePlayer: YouTubePlayer? = null 
     private var mediaPlayer: MediaPlayer? = null
-    private val httpClient = OkHttpClient()
+    private val httpClient = OkHttpClient() // client 是 val，因为实例不变
     
-    // 状态标记
+    // --- 状态标记 (必须是 var，因为会随播放状态改变) ---
     private var isPlaying = false
-    private var currentMode = MODE_NONE // "YT" or "NE"
+    private var currentMode = MODE_NONE 
 
     companion object {
         const val MODE_NONE = "NONE"
@@ -71,9 +73,10 @@ class BasicExampleActivity : AppCompatActivity() {
         playBtn = findViewById(R.id.btn_play_toggle)
         seekBar = findViewById(R.id.player_seekbar)
 
-        // 初始隐藏 YouTube, 显示类似 NewWyy 的封面页
+        // 初始状态：显示网易云封面，隐藏 YouTube
         youtubeView.visibility = View.GONE
         neteaseCard.visibility = View.VISIBLE
+        
         lifecycle.addObserver(youtubeView)
     }
 
@@ -84,10 +87,10 @@ class BasicExampleActivity : AppCompatActivity() {
             }
             override fun onStateChange(youTubePlayer: YouTubePlayer, state: com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerState) {
                 if (state == com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerState.PLAYING) {
-                    isPlaying = true
+                    isPlaying = true // 这里修改 var 变量
                     updatePlayIcon(true)
                 } else if (state == com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerState.PAUSED) {
-                    isPlaying = false
+                    isPlaying = false // 这里修改 var 变量
                     updatePlayIcon(false)
                 }
             }
@@ -110,10 +113,8 @@ class BasicExampleActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
-        // 点击搜索按钮
         searchBtn.setOnClickListener { performSearch() }
         
-        // 键盘回车搜索
         searchInput.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 performSearch()
@@ -121,7 +122,6 @@ class BasicExampleActivity : AppCompatActivity() {
             } else false
         }
 
-        // 播放暂停切换
         playBtn.setOnClickListener { togglePlayState() }
     }
 
@@ -130,10 +130,10 @@ class BasicExampleActivity : AppCompatActivity() {
         if (query.isEmpty()) return
 
         // 收起键盘
-        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(searchInput.windowToken, 0)
 
-        // 逻辑分流：是以 "yt:" 开头还是普通文本
+        // 逻辑分流
         if (query.startsWith("yt:") || query.length == 11) {
             val videoId = if (query.startsWith("yt:")) query.substring(3) else query
             switchToYouTubeMode(videoId)
@@ -142,12 +142,11 @@ class BasicExampleActivity : AppCompatActivity() {
         }
     }
 
-    // --- 模式 A: YouTube ---
+    // --- 模式切换 ---
     private fun switchToYouTubeMode(videoId: String) {
-        currentMode = MODE_YT
-        mediaPlayer?.pause() // 停止网易云播放
+        currentMode = MODE_YT // 修改 var
+        mediaPlayer?.pause()
         
-        // UI 切换
         youtubeView.visibility = View.VISIBLE
         neteaseCard.visibility = View.GONE
         
@@ -158,20 +157,17 @@ class BasicExampleActivity : AppCompatActivity() {
         updatePlayIcon(true)
     }
 
-    // --- 模式 B: 网易云 (模拟 API) ---
     private fun switchToNeteaseMode(keyword: String) {
-        currentMode = MODE_NE
-        activeYouTubePlayer?.pause() // 停止 YouTube 播放
+        currentMode = MODE_NE // 修改 var
+        activeYouTubePlayer?.pause()
         
-        // UI 切换
         youtubeView.visibility = View.GONE
         neteaseCard.visibility = View.VISIBLE
         
         updateMetadata("Searching...", keyword)
 
-        // 使用 OkHttp 搜索网易云
+        // 模拟 API 请求
         val searchUrl = "https://music.163.com/api/search/get/web?s=$keyword&type=1&offset=0&total=true&limit=1"
-        
         val request = Request.Builder()
             .url(searchUrl)
             .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)")
@@ -201,8 +197,6 @@ class BasicExampleActivity : AppCompatActivity() {
                         val artistName = if (artists.length() > 0) artists.getJSONObject(0).getString("name") else "Unknown"
                         val album = song.getJSONObject("album")
                         val coverUrl = album.getString("picUrl")
-
-                        // 构造播放链接
                         val playUrl = "http://music.163.com/song/media/outer/url?id=$songId.mp3"
 
                         runOnUiThread {
@@ -216,9 +210,6 @@ class BasicExampleActivity : AppCompatActivity() {
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    runOnUiThread { 
-                        Toast.makeText(this@BasicExampleActivity, "Parse Error", Toast.LENGTH_SHORT).show() 
-                    }
                 }
             }
         })
@@ -231,16 +222,14 @@ class BasicExampleActivity : AppCompatActivity() {
             mediaPlayer?.prepareAsync()
             mediaPlayer?.setOnPreparedListener { 
                 it.start()
-                isPlaying = true
+                isPlaying = true // 修改 var
                 updatePlayIcon(true)
             }
 
-            // 加载封面 (使用 Glide)
-            Glide.with(this)
-                .load(coverUrl)
-                .into(albumCover)
-                
-            // 背景高斯模糊
+            // 加载封面
+            Glide.with(this).load(coverUrl).into(albumCover)
+            
+            // 背景高斯模糊 (如果库不可用则忽略)
             try {
                 Glide.with(this)
                     .load(coverUrl)
@@ -248,8 +237,7 @@ class BasicExampleActivity : AppCompatActivity() {
                     .transition(DrawableTransitionOptions.withCrossFade())
                     .into(bgImage)
             } catch (e: Exception) {
-               // 降级处理：如果不模糊库不可用，直接显示原图或灰色
-               bgImage.setImageResource(android.R.color.darker_gray)
+               // Ignore
             }
 
         } catch (e: Exception) {
@@ -263,10 +251,10 @@ class BasicExampleActivity : AppCompatActivity() {
         } else if (currentMode == MODE_NE) {
             if (mediaPlayer?.isPlaying == true) {
                 mediaPlayer?.pause()
-                isPlaying = false
+                isPlaying = false // 修改 var
             } else {
                 mediaPlayer?.start()
-                isPlaying = true
+                isPlaying = true // 修改 var
             }
             updatePlayIcon(isPlaying)
         }
