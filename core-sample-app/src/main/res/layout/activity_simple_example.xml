@@ -1,30 +1,93 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#000000">
+package com.pierfrancescosoffritti.androidyoutubeplayer.core.sampleapp.examples.simpleExample;
 
-    <com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
-        android:id="@+id/youtube_player_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+import android.content.res.Configuration;
+import android.os.Bundle;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="⬇️ 网易云音乐 (已支持登录) ⬇️"
-        android:textColor="#AAAAAA"
-        android:textSize="12sp"
-        android:gravity="center"
-        android:padding="5dp"
-        android:background="#222222"/>
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.sampleapp.R;
 
-    <WebView
-        android:id="@+id/netease_webview"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+public class SimpleExampleActivity extends AppCompatActivity {
 
-</LinearLayout>
+  private YouTubePlayerView youTubePlayerView;
+  private WebView neteaseWebView;
+
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_simple_example);
+
+    initYouTubePlayer();
+    initNeteaseWebView();
+  }
+
+  private void initYouTubePlayer() {
+    youTubePlayerView = findViewById(R.id.youtube_player_view);
+    
+    // 绑定生命周期
+    getLifecycle().addObserver(youTubePlayerView);
+
+    youTubePlayerView.addYouTubePlayerListener(new AbstractYouTubePlayerListener() {
+      @Override
+      public void onReady(@NonNull YouTubePlayer youTubePlayer) {
+        // 加载 Lofi Girl 直播
+        String videoId = "jfKfPfyJRdk";
+        youTubePlayer.loadVideo(videoId, 0);
+      }
+    });
+  }
+
+  private void initNeteaseWebView() {
+    neteaseWebView = findViewById(R.id.netease_webview);
+    WebSettings settings = neteaseWebView.getSettings();
+
+    settings.setJavaScriptEnabled(true);
+    // 关键：开启 DOM Storage 解决登录问题
+    settings.setDomStorageEnabled(true);
+    settings.setDatabaseEnabled(true);
+    settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+
+    neteaseWebView.setWebViewClient(new WebViewClient() {
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            view.loadUrl(url);
+            return true;
+        }
+    });
+
+    neteaseWebView.loadUrl("https://music.163.com/m/");
+  }
+
+  @Override
+  public void onConfigurationChanged(@NonNull Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+      youTubePlayerView.matchParent();
+    } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+      youTubePlayerView.wrapContent();
+    }
+  }
+
+  @Override
+  public void onBackPressed() {
+      if (neteaseWebView != null && neteaseWebView.canGoBack()) {
+          neteaseWebView.goBack();
+      } else {
+          super.onBackPressed();
+      }
+  }
+  
+  @Override
+  protected void onDestroy() {
+      super.onDestroy();
+      if (youTubePlayerView != null) {
+          youTubePlayerView.release();
+      }
+  }
+}
