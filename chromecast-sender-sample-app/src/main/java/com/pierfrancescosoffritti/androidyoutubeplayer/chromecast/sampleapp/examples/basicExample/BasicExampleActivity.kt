@@ -134,7 +134,7 @@ class BasicExampleActivity : AppCompatActivity() {
         imm.hideSoftInputFromWindow(searchInput.windowToken, 0)
 
         // 逻辑分流：是以 "yt:" 开头还是普通文本
-        if (query.startsWith("yt:") || query.length == 11) { // 简单判断，如果是 11 位字符可能也是 YT ID
+        if (query.startsWith("yt:") || query.length == 11) {
             val videoId = if (query.startsWith("yt:")) query.substring(3) else query
             switchToYouTubeMode(videoId)
         } else {
@@ -169,8 +169,7 @@ class BasicExampleActivity : AppCompatActivity() {
         
         updateMetadata("Searching...", keyword)
 
-        // 使用 OkHttp 搜索网易云 (调用官方公开 API 接口)
-        // 注意：这是客户端直接请求，可能会有跨域或反爬限制，这里仅作为 Demo 逻辑演示
+        // 使用 OkHttp 搜索网易云
         val searchUrl = "https://music.163.com/api/search/get/web?s=$keyword&type=1&offset=0&total=true&limit=1"
         
         val request = Request.Builder()
@@ -203,7 +202,7 @@ class BasicExampleActivity : AppCompatActivity() {
                         val album = song.getJSONObject("album")
                         val coverUrl = album.getString("picUrl")
 
-                        // 构造播放链接 (标准网易云直链)
+                        // 构造播放链接
                         val playUrl = "http://music.163.com/song/media/outer/url?id=$songId.mp3"
 
                         runOnUiThread {
@@ -242,11 +241,16 @@ class BasicExampleActivity : AppCompatActivity() {
                 .into(albumCover)
                 
             // 背景高斯模糊
-            Glide.with(this)
-                .load(coverUrl)
-                .apply(RequestOptions.bitmapTransform(jp.wasabeef.glide.transformations.BlurTransformation(25, 3))) // 如果没有引入 transformations 库，这里可以用简单的 placeholder
-                .transition(DrawableTransitionOptions.withCrossFade())
-                .into(bgImage)
+            try {
+                Glide.with(this)
+                    .load(coverUrl)
+                    .apply(RequestOptions.bitmapTransform(jp.wasabeef.glide.transformations.BlurTransformation(25, 3)))
+                    .transition(DrawableTransitionOptions.withCrossFade())
+                    .into(bgImage)
+            } catch (e: Exception) {
+               // 降级处理：如果不模糊库不可用，直接显示原图或灰色
+               bgImage.setImageResource(android.R.color.darker_gray)
+            }
 
         } catch (e: Exception) {
             Toast.makeText(this, "Play Error", Toast.LENGTH_SHORT).show()
@@ -273,9 +277,8 @@ class BasicExampleActivity : AppCompatActivity() {
         artistText.text = artist
     }
 
-    private fun updatePlayIcon(isPlaying: Boolean) {
-        // 使用自带的图标资源
-        val iconRes = if (isPlaying) R.drawable.ayp_ic_pause_36dp else R.drawable.ayp_ic_play_36dp
+    private fun updatePlayIcon(playing: Boolean) {
+        val iconRes = if (playing) R.drawable.ayp_ic_pause_36dp else R.drawable.ayp_ic_play_36dp
         playBtn.setImageResource(iconRes)
     }
 
