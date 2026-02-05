@@ -11,22 +11,16 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".MainActivity"
-            android:exported="true" />
-
-        <activity
             android:name=".examples.simpleExample.SimpleExampleActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout"
             android:hardwareAccelerated="true"
-            android:label="混合播放器"
+            android:label="YouTube &amp; Netease"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name="com.psoffritti.librarysampleapptemplate.core.SampleAppTemplateActivity" />
 
     </application>
 
