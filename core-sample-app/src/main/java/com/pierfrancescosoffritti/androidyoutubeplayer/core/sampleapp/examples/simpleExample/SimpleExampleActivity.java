@@ -34,9 +34,8 @@ public class SimpleExampleActivity extends AppCompatActivity {
     youTubePlayerView.addYouTubePlayerListener(new AbstractYouTubePlayerListener() {
       @Override
       public void onReady(@NonNull YouTubePlayer youTubePlayer) {
-        // 预加载 Lofi Girl 直播
-        String videoId = "jfKfPfyJRdk";
-        youTubePlayer.loadVideo(videoId, 0);
+        // 默认加载 Lofi Girl
+        youTubePlayer.loadVideo("jfKfPfyJRdk", 0);
       }
     });
   }
@@ -46,15 +45,13 @@ public class SimpleExampleActivity extends AppCompatActivity {
     WebSettings settings = neteaseWebView.getSettings();
 
     settings.setJavaScriptEnabled(true);
-    // 关键：开启 DOM Storage 解决登录问题
-    settings.setDomStorageEnabled(true);
+    settings.setDomStorageEnabled(true); // 登录关键
     settings.setDatabaseEnabled(true);
     settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
 
     neteaseWebView.setWebViewClient(new WebViewClient() {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            // 强制在 App 内打开
             view.loadUrl(url);
             return true;
         }
@@ -66,7 +63,6 @@ public class SimpleExampleActivity extends AppCompatActivity {
   @Override
   public void onConfigurationChanged(@NonNull Configuration newConfig) {
     super.onConfigurationChanged(newConfig);
-    // 横屏全屏逻辑
     if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
       youTubePlayerView.matchParent();
     } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -76,7 +72,6 @@ public class SimpleExampleActivity extends AppCompatActivity {
 
   @Override
   public void onBackPressed() {
-      // 优先网页后退
       if (neteaseWebView != null && neteaseWebView.canGoBack()) {
           neteaseWebView.goBack();
       } else {
