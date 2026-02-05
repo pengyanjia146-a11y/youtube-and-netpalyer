@@ -34,17 +34,14 @@ tasks.whenTaskAdded { task ->
 android {
     namespace 'com.pierfrancescosoffritti.androidyoutubeplayer.core.sampleapp'
     
-    // 🔴 核心修复：升级 SDK 到 36 (Android 15) 以匹配最新依赖库
+    // 1. 保持 SDK 36 以匹配最新库
     compileSdk 36
 
     defaultConfig {
         applicationId "com.pierfrancescosoffritti.androidyoutubeplayer.core.sampleapp"
         minSdk 21
-        
-        // 🔴 核心修复：同步升级目标版本到 36
         targetSdk 36
         
-        // 使用自动管理的版本号
         versionCode versionProps['VERSION_CODE'].toInteger()
         versionName versionProps['VERSION_NAME']
 
@@ -57,9 +54,17 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    
+    // 2. 🔴 核心修复：升级到 Java 17
+    // 之前报错是因为这里写了 VERSION_1_8，但 Kotlin 用的是 17
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    
+    // 3. 🔴 核心修复：强制 Kotlin 也用 JVM 17
+    kotlinOptions {
+        jvmTarget = '17'
     }
 }
 
@@ -70,7 +75,8 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.android.material:material:1.11.0'
 
-    // 引用本地模块
+    // 4. 🔴 核心修复：必须引用本地模块，不能用在线库
+    // 否则你会再次遇到 "resource not found" 错误
     implementation project(':core')
     implementation project(':custom-ui')
 
