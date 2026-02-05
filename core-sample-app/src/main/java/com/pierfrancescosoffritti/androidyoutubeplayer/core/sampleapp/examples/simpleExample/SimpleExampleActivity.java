@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -35,7 +34,7 @@ public class SimpleExampleActivity extends AppCompatActivity {
     youTubePlayerView.addYouTubePlayerListener(new AbstractYouTubePlayerListener() {
       @Override
       public void onReady(@NonNull YouTubePlayer youTubePlayer) {
-        // 预加载一个 Lofi 视频
+        // 预加载 Lofi Girl 直播
         String videoId = "jfKfPfyJRdk";
         youTubePlayer.loadVideo(videoId, 0);
       }
@@ -46,48 +45,42 @@ public class SimpleExampleActivity extends AppCompatActivity {
     neteaseWebView = findViewById(R.id.netease_webview);
     WebSettings settings = neteaseWebView.getSettings();
 
-    // 🔴 开启 JS
     settings.setJavaScriptEnabled(true);
-    
-    // 🔴 关键设置：开启 DOM Storage
-    // 这是解决网易云登录后刷新掉线问题的关键
+    // 关键：开启 DOM Storage 解决登录问题
     settings.setDomStorageEnabled(true);
     settings.setDatabaseEnabled(true);
-    
-    // 允许混合内容加载 (http/https)
     settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
 
-    // 强制在当前 WebView 打开链接，不跳浏览器
     neteaseWebView.setWebViewClient(new WebViewClient() {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            // 强制在 App 内打开
             view.loadUrl(url);
             return true;
         }
     });
 
-    // 加载网易云移动版
     neteaseWebView.loadUrl("https://music.163.com/m/");
   }
 
   @Override
   public void onConfigurationChanged(@NonNull Configuration newConfig) {
     super.onConfigurationChanged(newConfig);
-    // 处理横竖屏切换
+    // 横屏全屏逻辑
     if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
       youTubePlayerView.matchParent();
     } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
       youTubePlayerView.wrapContent();
     }
   }
-  
-  // 处理返回键：网页优先后退
+
   @Override
   public void onBackPressed() {
+      // 优先网页后退
       if (neteaseWebView != null && neteaseWebView.canGoBack()) {
           neteaseWebView.goBack();
       } else {
           super.onBackPressed();
       }
   }
-}s
+}
