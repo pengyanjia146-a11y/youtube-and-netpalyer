@@ -2,40 +2,40 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 // --- 自动版本管理逻辑 开始 ---
+// 1. 定义版本文件对象
 def versionPropsFile = file('version.properties')
 def versionProps = new Properties()
 
-// 如果文件存在，加载版本信息；否则初始化
+// 2. 加载或初始化版本信息
 if (versionPropsFile.canRead()) {
     versionProps.load(new FileInputStream(versionPropsFile))
 } else {
+    // 如果文件不存在，初始化为 1
     versionProps['VERSION_CODE'] = '1'
     versionProps['VERSION_NAME'] = '1.0.0'
+    versionProps.store(versionPropsFile.newWriter(), null)
 }
 
-// 定义自动增加版本的任务
+// 3. 定义递增任务
 task autoIncrementVersion {
     doLast {
-        // 读取当前版本号
+        // 读取旧版本号
         def code = versionProps['VERSION_CODE'].toInteger() + 1
-        // 这里的逻辑是：主版本号不变，构建号+1 (例如 1.0.1 -> 1.0.2)
+        
+        // 生成新版本名 (例如: 1.0.1 -> 1.0.2)
         def name = "1.0." + code 
 
-        // 更新并保存回文件
+        // 保存回文件
         versionProps['VERSION_CODE'] = code.toString()
         versionProps['VERSION_NAME'] = name
         versionProps.store(versionPropsFile.newWriter(), null)
         
-        println("----------")
-        println("Version Auto-Incremented to:")
-        println("Code: " + code)
-        println("Name: " + name)
-        println("----------")
+        println("🚀 Version Bumped to: " + name + " (" + code + ")")
     }
 }
 
-// 将版本递增任务挂载到打包任务之前
-// 注意：为了避免每次点 Run 都增加，这里建议挂载到 assembleDebug 或 assembleRelease
+// 4. 将递增任务绑定到打包流程 (Debug/Release)
+// 这样每次你在本地或云端打包，版本都会自动 +1
 tasks.whenTaskAdded { task ->
     if (task.name == 'assembleDebug' || task.name == 'assembleRelease') {
         task.dependsOn autoIncrementVersion
@@ -52,7 +52,7 @@ android {
         minSdk 21
         targetSdk 34
         
-        // 使用 version.properties 中的值
+        // 🔴 使用自动管理的版本号
         versionCode versionProps['VERSION_CODE'].toInteger()
         versionName versionProps['VERSION_NAME']
 
@@ -78,7 +78,7 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.android.material:material:1.11.0'
 
-    // YouTube 播放器核心库
+    // YouTube 核心库
     implementation 'com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0'
 
     testImplementation 'junit:junit:4.13.2'
