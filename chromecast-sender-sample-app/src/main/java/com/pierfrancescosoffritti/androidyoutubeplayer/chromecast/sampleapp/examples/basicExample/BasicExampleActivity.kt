@@ -1,102 +1,287 @@
 package com.pierfrancescosoffritti.androidyoutubeplayer.chromecast.sampleapp.examples.basicExample
 
-import android.content.Intent
+import android.media.AudioAttributes
+import android.media.MediaPlayer
 import android.os.Bundle
-import android.util.Log
-import android.widget.Button
-import android.widget.TextView
+import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.mediarouter.app.MediaRouteButton
-import com.google.android.gms.cast.framework.CastContext
-import com.pierfrancescosoffritti.androidyoutubeplayer.chromecast.chromecastsender.ChromecastYouTubePlayerContext
-import com.pierfrancescosoffritti.androidyoutubeplayer.chromecast.chromecastsender.io.infrastructure.ChromecastConnectionListener
-import com.pierfrancescosoffritti.androidyoutubeplayer.chromecast.chromecastsender.utils.PlayServicesUtils
-import com.pierfrancescosoffritti.androidyoutubeplayer.chromecast.sampleapp.utils.MediaRouteButtonUtils
-import com.pierfrancescosoffritti.androidyoutubeplayer.chromecast.sampleapp.utils.VideoIdsProvider
-import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants
+import androidx.cardview.widget.CardView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.bumptech.glide.request.RequestOptions
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener
-import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.toFloat
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
 import com.pierfrancescosoffritti.cyplayersample.R
+import okhttp3.*
+import org.json.JSONObject
+import java.io.IOException
 
 class BasicExampleActivity : AppCompatActivity() {
 
-  private val googlePlayServicesAvailabilityRequestCode = 1
+    // --- UI Components ---
+    private lateinit var youtubeView: YouTubePlayerView
+    private lateinit var neteaseCard: CardView
+    private lateinit var bgImage: ImageView
+    private lateinit var albumCover: ImageView
+    private lateinit var titleText: TextView
+    private lateinit var artistText: TextView
+    private lateinit var searchInput: EditText
+    private lateinit var searchBtn: Button
+    private lateinit var playBtn: ImageView
+    private lateinit var seekBar: SeekBar
 
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    setContentView(R.layout.activity_basic_example)
+    // --- Logic Components ---
+    private var activeYouTubePlayer: YouTubePlayer? = null
+    private var mediaPlayer: MediaPlayer? = null
+    private val httpClient = OkHttpClient()
+    
+    // 状态标记
+    private var isPlaying = false
+    private var currentMode = MODE_NONE // "YT" or "NE"
 
-    val mediaRouteButton = findViewById<MediaRouteButton>(R.id.media_route_button)
-
-    MediaRouteButtonUtils.initMediaRouteButton(mediaRouteButton)
-
-    // can't use CastContext until I'm sure the user has GooglePlayServices
-    PlayServicesUtils.checkGooglePlayServicesAvailability(
-      this,
-      googlePlayServicesAvailabilityRequestCode
-    ) { initChromecast() }
-  }
-
-  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    super.onActivityResult(requestCode, resultCode, data)
-
-    // can't use CastContext until I'm sure the user has GooglePlayServices
-    if (requestCode == googlePlayServicesAvailabilityRequestCode)
-      PlayServicesUtils.checkGooglePlayServicesAvailability(
-        this,
-        googlePlayServicesAvailabilityRequestCode
-      ) { initChromecast() }
-  }
-
-  private fun initChromecast() {
-    ChromecastYouTubePlayerContext(
-      CastContext.getSharedInstance(this).sessionManager,
-      SimpleChromecastConnectionListener()
-    )
-  }
-
-  inner class SimpleChromecastConnectionListener : ChromecastConnectionListener {
-    override fun onChromecastConnecting() {
-      Log.d(javaClass.simpleName, "onChromecastConnecting")
+    companion object {
+        const val MODE_NONE = "NONE"
+        const val MODE_YT = "YT"
+        const val MODE_NE = "NE"
     }
 
-    override fun onChromecastConnected(chromecastYouTubePlayerContext: ChromecastYouTubePlayerContext) {
-      Log.d(javaClass.simpleName, "onChromecastConnected")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_basic_example)
 
-      initializeCastPlayer(chromecastYouTubePlayerContext)
+        initViews()
+        initYouTube()
+        initMediaPlayer()
+        setupListeners()
     }
 
-    override fun onChromecastDisconnected() {
-      Log.d(javaClass.simpleName, "onChromecastDisconnected")
+    private fun initViews() {
+        youtubeView = findViewById(R.id.youtube_player_view)
+        neteaseCard = findViewById(R.id.netease_card)
+        bgImage = findViewById(R.id.bg_image)
+        albumCover = findViewById(R.id.album_cover)
+        titleText = findViewById(R.id.song_title)
+        artistText = findViewById(R.id.song_artist)
+        searchInput = findViewById(R.id.search_input)
+        searchBtn = findViewById(R.id.btn_search)
+        playBtn = findViewById(R.id.btn_play_toggle)
+        seekBar = findViewById(R.id.player_seekbar)
+
+        // 初始隐藏 YouTube, 显示类似 NewWyy 的封面页
+        youtubeView.visibility = View.GONE
+        neteaseCard.visibility = View.VISIBLE
+        lifecycle.addObserver(youtubeView)
     }
 
-    private fun initializeCastPlayer(chromecastYouTubePlayerContext: ChromecastYouTubePlayerContext) {
-      chromecastYouTubePlayerContext.initialize(object : AbstractYouTubePlayerListener() {
-        override fun onReady(youTubePlayer: YouTubePlayer) {
-          youTubePlayer.loadVideo(VideoIdsProvider.getNextVideoId(), 0f)
+    private fun initYouTube() {
+        youtubeView.addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
+            override fun onReady(youTubePlayer: YouTubePlayer) {
+                activeYouTubePlayer = youTubePlayer
+            }
+            override fun onStateChange(youTubePlayer: YouTubePlayer, state: com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerState) {
+                if (state == com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerState.PLAYING) {
+                    isPlaying = true
+                    updatePlayIcon(true)
+                } else if (state == com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerState.PAUSED) {
+                    isPlaying = false
+                    updatePlayIcon(false)
+                }
+            }
+        })
+    }
 
-          initPlaybackSpeedButtons(youTubePlayer)
+    private fun initMediaPlayer() {
+        mediaPlayer = MediaPlayer().apply {
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .build()
+            )
+            setOnCompletionListener { 
+                isPlaying = false
+                updatePlayIcon(false)
+            }
+        }
+    }
+
+    private fun setupListeners() {
+        // 点击搜索按钮
+        searchBtn.setOnClickListener { performSearch() }
+        
+        // 键盘回车搜索
+        searchInput.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                performSearch()
+                true
+            } else false
         }
 
-        override fun onPlaybackRateChange(
-          youTubePlayer: YouTubePlayer,
-          playbackRate: PlayerConstants.PlaybackRate
-        ) {
-          val playbackSpeedTextView = findViewById<TextView>(R.id.playback_speed_text_view)
-          playbackSpeedTextView.text = "Playback speed: ${playbackRate.toFloat()}"
-        }
-      })
+        // 播放暂停切换
+        playBtn.setOnClickListener { togglePlayState() }
     }
-  }
 
-  fun initPlaybackSpeedButtons(youTubePlayer: YouTubePlayer) {
-    val playbackSpeed_0_25 = findViewById<Button>(R.id.playback_speed_0_25)
-    val playbackSpeed_1 = findViewById<Button>(R.id.playback_speed_1)
-    val playbackSpeed_2 = findViewById<Button>(R.id.playback_speed_2)
+    private fun performSearch() {
+        val query = searchInput.text.toString().trim()
+        if (query.isEmpty()) return
 
-    playbackSpeed_0_25.setOnClickListener { youTubePlayer.setPlaybackRate(PlayerConstants.PlaybackRate.RATE_0_25) }
-    playbackSpeed_1.setOnClickListener { youTubePlayer.setPlaybackRate(PlayerConstants.PlaybackRate.RATE_1) }
-    playbackSpeed_2.setOnClickListener { youTubePlayer.setPlaybackRate(PlayerConstants.PlaybackRate.RATE_2) }
-  }
+        // 收起键盘
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(searchInput.windowToken, 0)
+
+        // 逻辑分流：是以 "yt:" 开头还是普通文本
+        if (query.startsWith("yt:") || query.length == 11) { // 简单判断，如果是 11 位字符可能也是 YT ID
+            val videoId = if (query.startsWith("yt:")) query.substring(3) else query
+            switchToYouTubeMode(videoId)
+        } else {
+            switchToNeteaseMode(query)
+        }
+    }
+
+    // --- 模式 A: YouTube ---
+    private fun switchToYouTubeMode(videoId: String) {
+        currentMode = MODE_YT
+        mediaPlayer?.pause() // 停止网易云播放
+        
+        // UI 切换
+        youtubeView.visibility = View.VISIBLE
+        neteaseCard.visibility = View.GONE
+        
+        updateMetadata("YouTube Video", "Loading...")
+        
+        activeYouTubePlayer?.loadVideo(videoId, 0f)
+        isPlaying = true
+        updatePlayIcon(true)
+    }
+
+    // --- 模式 B: 网易云 (模拟 API) ---
+    private fun switchToNeteaseMode(keyword: String) {
+        currentMode = MODE_NE
+        activeYouTubePlayer?.pause() // 停止 YouTube 播放
+        
+        // UI 切换
+        youtubeView.visibility = View.GONE
+        neteaseCard.visibility = View.VISIBLE
+        
+        updateMetadata("Searching...", keyword)
+
+        // 使用 OkHttp 搜索网易云 (调用官方公开 API 接口)
+        // 注意：这是客户端直接请求，可能会有跨域或反爬限制，这里仅作为 Demo 逻辑演示
+        val searchUrl = "https://music.163.com/api/search/get/web?s=$keyword&type=1&offset=0&total=true&limit=1"
+        
+        val request = Request.Builder()
+            .url(searchUrl)
+            .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)")
+            .header("Referer", "https://music.163.com/")
+            .header("Cookie", "appver=1.5.0.75771")
+            .build()
+
+        httpClient.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread { 
+                    Toast.makeText(this@BasicExampleActivity, "Network Error", Toast.LENGTH_SHORT).show() 
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val body = response.body?.string() ?: return
+                try {
+                    val json = JSONObject(body)
+                    val result = json.optJSONObject("result")
+                    val songs = result?.optJSONArray("songs")
+                    
+                    if (songs != null && songs.length() > 0) {
+                        val song = songs.getJSONObject(0)
+                        val songId = song.getLong("id")
+                        val songName = song.getString("name")
+                        val artists = song.getJSONArray("artists")
+                        val artistName = if (artists.length() > 0) artists.getJSONObject(0).getString("name") else "Unknown"
+                        val album = song.getJSONObject("album")
+                        val coverUrl = album.getString("picUrl")
+
+                        // 构造播放链接 (标准网易云直链)
+                        val playUrl = "http://music.163.com/song/media/outer/url?id=$songId.mp3"
+
+                        runOnUiThread {
+                            updateMetadata(songName, artistName)
+                            playNeteaseStream(playUrl, coverUrl)
+                        }
+                    } else {
+                        runOnUiThread { 
+                            Toast.makeText(this@BasicExampleActivity, "No songs found", Toast.LENGTH_SHORT).show() 
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    runOnUiThread { 
+                        Toast.makeText(this@BasicExampleActivity, "Parse Error", Toast.LENGTH_SHORT).show() 
+                    }
+                }
+            }
+        })
+    }
+
+    private fun playNeteaseStream(url: String, coverUrl: String) {
+        try {
+            mediaPlayer?.reset()
+            mediaPlayer?.setDataSource(url)
+            mediaPlayer?.prepareAsync()
+            mediaPlayer?.setOnPreparedListener { 
+                it.start()
+                isPlaying = true
+                updatePlayIcon(true)
+            }
+
+            // 加载封面 (使用 Glide)
+            Glide.with(this)
+                .load(coverUrl)
+                .into(albumCover)
+                
+            // 背景高斯模糊
+            Glide.with(this)
+                .load(coverUrl)
+                .apply(RequestOptions.bitmapTransform(jp.wasabeef.glide.transformations.BlurTransformation(25, 3))) // 如果没有引入 transformations 库，这里可以用简单的 placeholder
+                .transition(DrawableTransitionOptions.withCrossFade())
+                .into(bgImage)
+
+        } catch (e: Exception) {
+            Toast.makeText(this, "Play Error", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun togglePlayState() {
+        if (currentMode == MODE_YT) {
+            if (isPlaying) activeYouTubePlayer?.pause() else activeYouTubePlayer?.play()
+        } else if (currentMode == MODE_NE) {
+            if (mediaPlayer?.isPlaying == true) {
+                mediaPlayer?.pause()
+                isPlaying = false
+            } else {
+                mediaPlayer?.start()
+                isPlaying = true
+            }
+            updatePlayIcon(isPlaying)
+        }
+    }
+
+    private fun updateMetadata(title: String, artist: String) {
+        titleText.text = title
+        artistText.text = artist
+    }
+
+    private fun updatePlayIcon(isPlaying: Boolean) {
+        // 使用自带的图标资源
+        val iconRes = if (isPlaying) R.drawable.ayp_ic_pause_36dp else R.drawable.ayp_ic_play_36dp
+        playBtn.setImageResource(iconRes)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        youtubeView.release()
+        mediaPlayer?.release()
+    }
 }
