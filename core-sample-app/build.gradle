@@ -1,47 +1,35 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
-// --- 自动版本管理逻辑 开始 ---
-// 1. 定义版本文件对象
+// --- 自动版本管理逻辑 (保留) ---
 def versionPropsFile = file('version.properties')
 def versionProps = new Properties()
 
-// 2. 加载或初始化版本信息
 if (versionPropsFile.canRead()) {
     versionProps.load(new FileInputStream(versionPropsFile))
 } else {
-    // 如果文件不存在，初始化为 1
     versionProps['VERSION_CODE'] = '1'
     versionProps['VERSION_NAME'] = '1.0.0'
     versionProps.store(versionPropsFile.newWriter(), null)
 }
 
-// 3. 定义递增任务
 task autoIncrementVersion {
     doLast {
-        // 读取旧版本号
         def code = versionProps['VERSION_CODE'].toInteger() + 1
-        
-        // 生成新版本名 (例如: 1.0.1 -> 1.0.2)
         def name = "1.0." + code 
-
-        // 保存回文件
         versionProps['VERSION_CODE'] = code.toString()
         versionProps['VERSION_NAME'] = name
         versionProps.store(versionPropsFile.newWriter(), null)
-        
         println("🚀 Version Bumped to: " + name + " (" + code + ")")
     }
 }
 
-// 4. 将递增任务绑定到打包流程 (Debug/Release)
-// 这样每次你在本地或云端打包，版本都会自动 +1
 tasks.whenTaskAdded { task ->
     if (task.name == 'assembleDebug' || task.name == 'assembleRelease') {
         task.dependsOn autoIncrementVersion
     }
 }
-// --- 自动版本管理逻辑 结束 ---
+// ------------------------------
 
 android {
     namespace 'com.pierfrancescosoffritti.androidyoutubeplayer.core.sampleapp'
@@ -52,7 +40,7 @@ android {
         minSdk 21
         targetSdk 34
         
-        // 🔴 使用自动管理的版本号
+        // 使用自动管理的版本号
         versionCode versionProps['VERSION_CODE'].toInteger()
         versionName versionProps['VERSION_NAME']
 
@@ -78,8 +66,10 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.android.material:material:1.11.0'
 
-    // YouTube 核心库
-    implementation 'com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0'
+    // 🔴 核心修复：改用本地模块依赖，而不是在线库
+    // 这样才能找到最新的资源文件 (ayp_ic_play_36dp, showFullScreenButton 等)
+    implementation project(':core')
+    implementation project(':custom-ui')
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
