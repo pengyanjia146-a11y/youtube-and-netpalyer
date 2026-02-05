@@ -1,49 +1,162 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.constraintlayout.widget.ConstraintLayout 
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent"
+    android:background="#121212">
 
-    <androidx.mediarouter.app.MediaRouteButton
-        android:id="@+id/media_route_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <ImageView
+        android:id="@+id/bg_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:alpha="0.4"
+        android:src="@android:color/darker_gray"
+        tools:ignore="ContentDescription" />
 
     <LinearLayout
+        android:id="@+id/top_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:background="#40000000"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/playback_speed_text_view"
+        <EditText
+            android:id="@+id/search_input"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:gravity="center"
-            android:text="Playback speed" />
+            android:background="@drawable/ayp_shape_rounded_corners"
+            android:backgroundTint="#33FFFFFF"
+            android:hint="Search Song or yt:ID"
+            android:textColorHint="#AAAAAA"
+            android:textColor="#FFFFFF"
+            android:padding="12dp"
+            android:singleLine="true"
+            android:imeOptions="actionSearch"
+            android:inputType="text"/>
 
         <Button
-            android:id="@+id/playback_speed_0_25"
+            android:id="@+id/btn_search"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:backgroundTint="@android:color/white"
-            android:text="0.25" />
-
-        <Button
-            android:id="@+id/playback_speed_1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@android:color/white"
-            android:text="1" />
-
-        <Button
-            android:id="@+id/playback_speed_2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@android:color/white"
-            android:text="2" />
-
+            android:layout_marginStart="8dp"
+            android:text="GO"
+            android:backgroundTint="#D32F2F"
+            android:textColor="#FFFFFF"
+            android:minWidth="0dp"
+            android:paddingHorizontal="16dp"/>
     </LinearLayout>
 
-</LinearLayout>
+    <com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
+        android:id="@+id/youtube_player_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/top_bar"
+        app:layout_constraintBottom_toTopOf="@id/bottom_controls"
+        app:showFullScreenButton="false"
+        app:autoPlay="false" />
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/netease_card"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="20dp"
+        android:visibility="visible"
+        app:cardBackgroundColor="#00000000"
+        app:layout_constraintTop_toBottomOf="@id/top_bar"
+        app:layout_constraintBottom_toTopOf="@id/bottom_controls"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:id="@+id/album_cover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_launcher_background"
+            tools:ignore="ContentDescription" />
+    </androidx.cardview.widget.CardView>
+
+    <LinearLayout
+        android:id="@+id/bottom_controls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:background="#CC000000"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <TextView
+            android:id="@+id/song_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="NewWyy Player"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:gravity="center"
+            android:ellipsize="end"
+            android:singleLine="true"/>
+
+        <TextView
+            android:id="@+id/song_artist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ready to search"
+            android:textSize="14sp"
+            android:textColor="#AAAAAA"
+            android:gravity="center"
+            android:layout_marginBottom="16dp"
+            android:ellipsize="end"
+            android:singleLine="true"/>
+
+        <SeekBar
+            android:id="@+id/player_seekbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:progressTint="#FFFFFF"
+            android:thumbTint="#FFFFFF"
+            android:progressBackgroundTint="#55FFFFFF"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginTop="24dp">
+
+            <ImageView
+                android:id="@+id/btn_prev"
+                android:src="@drawable/ayp_ic_play_36dp"
+                android:rotation="180"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                app:tint="#FFFFFF"
+                android:contentDescription="Prev"/>
+
+            <ImageView
+                android:id="@+id/btn_play_toggle"
+                android:src="@drawable/ayp_ic_play_36dp"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginHorizontal="40dp"
+                app:tint="#FFFFFF"
+                android:contentDescription="Play"/>
+
+            <ImageView
+                android:id="@+id/btn_next"
+                android:src="@drawable/ayp_ic_play_36dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                app:tint="#FFFFFF"
+                android:contentDescription="Next"/>
+        </LinearLayout>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
