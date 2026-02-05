@@ -1,6 +1,48 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
+// --- 自动版本管理逻辑 开始 ---
+def versionPropsFile = file('version.properties')
+def versionProps = new Properties()
+
+// 如果文件存在，加载版本信息；否则初始化
+if (versionPropsFile.canRead()) {
+    versionProps.load(new FileInputStream(versionPropsFile))
+} else {
+    versionProps['VERSION_CODE'] = '1'
+    versionProps['VERSION_NAME'] = '1.0.0'
+}
+
+// 定义自动增加版本的任务
+task autoIncrementVersion {
+    doLast {
+        // 读取当前版本号
+        def code = versionProps['VERSION_CODE'].toInteger() + 1
+        // 这里的逻辑是：主版本号不变，构建号+1 (例如 1.0.1 -> 1.0.2)
+        def name = "1.0." + code 
+
+        // 更新并保存回文件
+        versionProps['VERSION_CODE'] = code.toString()
+        versionProps['VERSION_NAME'] = name
+        versionProps.store(versionPropsFile.newWriter(), null)
+        
+        println("----------")
+        println("Version Auto-Incremented to:")
+        println("Code: " + code)
+        println("Name: " + name)
+        println("----------")
+    }
+}
+
+// 将版本递增任务挂载到打包任务之前
+// 注意：为了避免每次点 Run 都增加，这里建议挂载到 assembleDebug 或 assembleRelease
+tasks.whenTaskAdded { task ->
+    if (task.name == 'assembleDebug' || task.name == 'assembleRelease') {
+        task.dependsOn autoIncrementVersion
+    }
+}
+// --- 自动版本管理逻辑 结束 ---
+
 android {
     namespace 'com.pierfrancescosoffritti.androidyoutubeplayer.core.sampleapp'
     compileSdk 34
@@ -9,8 +51,11 @@ android {
         applicationId "com.pierfrancescosoffritti.androidyoutubeplayer.core.sampleapp"
         minSdk 21
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        
+        // 使用 version.properties 中的值
+        versionCode versionProps['VERSION_CODE'].toInteger()
+        versionName versionProps['VERSION_NAME']
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -29,12 +74,11 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     
-    // 基本 UI 组件
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.android.material:material:1.11.0'
 
-    // --- 核心：YouTube 播放器库 ---
+    // YouTube 播放器核心库
     implementation 'com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0'
 
     testImplementation 'junit:junit:4.13.2'
