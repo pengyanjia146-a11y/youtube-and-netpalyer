@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt' // 修复：添加 kapt 插件以支持 Glide 注解处理
 apply from: '../dependencies.gradle'
 
 android {
@@ -48,14 +49,13 @@ dependencies {
   implementation "androidx.constraintlayout:constraintlayout:$versions.androidxConstraintLayout"
   implementation "androidx.mediarouter:mediarouter:$versions.androidxMediarouter"
   
-  // --- 修复关键点：添加 CardView 依赖 ---
   implementation "androidx.cardview:cardview:1.0.0"
 
   implementation "com.github.PierfrancescoSoffritti:library-sample-app-template:$versions.sampleAppTemplate"
 
-  // NewWyy 功能依赖
+  // 网络和图片加载库
   implementation 'com.squareup.okhttp3:okhttp:4.9.3'
   implementation 'com.github.bumptech.glide:glide:4.12.0'
-  annotationProcessor 'com.github.bumptech.glide:compiler:4.12.0'
+  kapt 'com.github.bumptech.glide:compiler:4.12.0' // 修复：使用 kapt 而不是 annotationProcessor
   implementation 'jp.wasabeef:glide-transformations:4.3.0'
 }
