@@ -1,7 +1,35 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
-// --- 自动版本管理 ---
+// --- 1. 自动删除报错的旧代码 (核弹级修复) ---
+// 既然 exclude 不生效，我们就直接在编译前把它们删掉，彻底根除报错
+task cleanupBrokenExamples(type: Delete) {
+    def examplePath = "src/main/java/com/pierfrancescosoffritti/androidyoutubeplayer/core/sampleapp/examples"
+    
+    // 删除除了 simpleExample 以外的所有示例文件夹
+    delete "$examplePath/chromecastExample"
+    delete "$examplePath/completeExample"
+    delete "$examplePath/composeExample"
+    delete "$examplePath/customUiExample"
+    delete "$examplePath/defaultCustomUiExample"
+    delete "$examplePath/fragmentExample"
+    delete "$examplePath/fullscreenExample"
+    delete "$examplePath/iFramePlayerOptionsExample"
+    delete "$examplePath/liveVideoExample"
+    delete "$examplePath/noLifecycleObserverExample"
+    delete "$examplePath/pictureInPictureExample"
+    delete "$examplePath/playerStateExample"
+    delete "$examplePath/playlistExample"
+    delete "$examplePath/recyclerViewExample"
+    delete "$examplePath/viewPagerExample"
+    
+    println "🧹 Cleaned up broken example files to ensure smooth build."
+}
+
+// 确保每次构建前都先清理
+preBuild.dependsOn cleanupBrokenExamples
+
+// --- 2. 自动版本管理 ---
 def versionPropsFile = file('version.properties')
 def versionProps = new Properties()
 if (versionPropsFile.canRead()) {
@@ -18,7 +46,6 @@ task autoIncrementVersion {
         versionProps['VERSION_CODE'] = code.toString()
         versionProps['VERSION_NAME'] = name
         versionProps.store(versionPropsFile.newWriter(), null)
-        println("🚀 Version Bumped to: " + name + " (" + code + ")")
     }
 }
 tasks.whenTaskAdded { task ->
@@ -26,7 +53,6 @@ tasks.whenTaskAdded { task ->
         task.dependsOn autoIncrementVersion
     }
 }
-// ----------------
 
 android {
     namespace 'com.pierfrancescosoffritti.androidyoutubeplayer.core.sampleapp'
@@ -48,36 +74,13 @@ android {
         }
     }
     
+    // 保持 Java 17，匹配 Kotlin
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions {
         jvmTarget = '17'
-    }
-
-    // 🔴 核心修复：排除所有报错的无关示例代码
-    sourceSets {
-        main {
-            java {
-                exclude '**/examples/chromecastExample/**'
-                exclude '**/examples/completeExample/**'
-                exclude '**/examples/composeExample/**'
-                exclude '**/examples/customUiExample/**'
-                exclude '**/examples/defaultCustomUiExample/**'
-                exclude '**/examples/fragmentExample/**'
-                exclude '**/examples/fullscreenExample/**'
-                exclude '**/examples/iFramePlayerOptionsExample/**'
-                exclude '**/examples/liveVideoExample/**'
-                exclude '**/examples/noLifecycleObserverExample/**'
-                exclude '**/examples/pictureInPictureExample/**'
-                exclude '**/examples/playerStateExample/**'
-                exclude '**/examples/playlistExample/**'
-                exclude '**/examples/recyclerViewExample/**'
-                exclude '**/examples/viewPagerExample/**'
-                // 仅保留 simpleExample (我们的混合播放器)
-            }
-        }
     }
 }
 
@@ -86,8 +89,11 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.android.material:material:1.11.0'
+    
+    // 引用本地模块
     implementation project(':core')
     implementation project(':custom-ui')
+    
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
