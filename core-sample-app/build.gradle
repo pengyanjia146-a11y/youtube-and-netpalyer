@@ -1,10 +1,9 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
-// --- 自动版本管理逻辑 (保持不变) ---
+// --- 自动版本管理 ---
 def versionPropsFile = file('version.properties')
 def versionProps = new Properties()
-
 if (versionPropsFile.canRead()) {
     versionProps.load(new FileInputStream(versionPropsFile))
 } else {
@@ -12,7 +11,6 @@ if (versionPropsFile.canRead()) {
     versionProps['VERSION_NAME'] = '1.0.0'
     versionProps.store(versionPropsFile.newWriter(), null)
 }
-
 task autoIncrementVersion {
     doLast {
         def code = versionProps['VERSION_CODE'].toInteger() + 1
@@ -23,28 +21,23 @@ task autoIncrementVersion {
         println("🚀 Version Bumped to: " + name + " (" + code + ")")
     }
 }
-
 tasks.whenTaskAdded { task ->
     if (task.name == 'assembleDebug' || task.name == 'assembleRelease') {
         task.dependsOn autoIncrementVersion
     }
 }
-// ------------------------------
+// ----------------
 
 android {
     namespace 'com.pierfrancescosoffritti.androidyoutubeplayer.core.sampleapp'
-    
-    // 1. 保持 SDK 36 以匹配最新库
     compileSdk 36
 
     defaultConfig {
         applicationId "com.pierfrancescosoffritti.androidyoutubeplayer.core.sampleapp"
         minSdk 21
         targetSdk 36
-        
         versionCode versionProps['VERSION_CODE'].toInteger()
         versionName versionProps['VERSION_NAME']
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -55,31 +48,46 @@ android {
         }
     }
     
-    // 2. 🔴 核心修复：升级到 Java 17
-    // 之前报错是因为这里写了 VERSION_1_8，但 Kotlin 用的是 17
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    
-    // 3. 🔴 核心修复：强制 Kotlin 也用 JVM 17
     kotlinOptions {
         jvmTarget = '17'
+    }
+
+    // 🔴 核心修复：排除所有报错的无关示例代码
+    sourceSets {
+        main {
+            java {
+                exclude '**/examples/chromecastExample/**'
+                exclude '**/examples/completeExample/**'
+                exclude '**/examples/composeExample/**'
+                exclude '**/examples/customUiExample/**'
+                exclude '**/examples/defaultCustomUiExample/**'
+                exclude '**/examples/fragmentExample/**'
+                exclude '**/examples/fullscreenExample/**'
+                exclude '**/examples/iFramePlayerOptionsExample/**'
+                exclude '**/examples/liveVideoExample/**'
+                exclude '**/examples/noLifecycleObserverExample/**'
+                exclude '**/examples/pictureInPictureExample/**'
+                exclude '**/examples/playerStateExample/**'
+                exclude '**/examples/playlistExample/**'
+                exclude '**/examples/recyclerViewExample/**'
+                exclude '**/examples/viewPagerExample/**'
+                // 仅保留 simpleExample (我们的混合播放器)
+            }
+        }
     }
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.android.material:material:1.11.0'
-
-    // 4. 🔴 核心修复：必须引用本地模块，不能用在线库
-    // 否则你会再次遇到 "resource not found" 错误
     implementation project(':core')
     implementation project(':custom-ui')
-
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
