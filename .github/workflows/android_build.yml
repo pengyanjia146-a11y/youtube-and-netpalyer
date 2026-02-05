@@ -2,7 +2,7 @@ name: Android Build APK
 
 on:
   push:
-    branches: [ "master", "main" ] # 监听主分支的提交
+    branches: [ "master", "main" ]
   pull_request:
     branches: [ "master", "main" ]
 
@@ -12,10 +12,10 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
@@ -24,11 +24,13 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    # 编译 Debug 包
     - name: Build Debug APK
       run: ./gradlew assembleDebug
 
+    # 🔴 核心修复：升级到 v4 版本
     - name: Upload APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: app-debug
         path: core-sample-app/build/outputs/apk/debug/core-sample-app-debug.apk
