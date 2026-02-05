@@ -40,7 +40,7 @@ class BasicExampleActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private val httpClient = OkHttpClient()
     
-    // --- Mutable State (Defined as var to allow reassignment) ---
+    // --- 关键修复：这里必须是 var，不能是 val ---
     private var isPlaying = false
     private var currentMode = MODE_NONE
 
@@ -85,10 +85,10 @@ class BasicExampleActivity : AppCompatActivity() {
             }
             override fun onStateChange(youTubePlayer: YouTubePlayer, state: com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerState) {
                 if (state == com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerState.PLAYING) {
-                    isPlaying = true
+                    isPlaying = true // 修复点：修改 var 变量
                     updatePlayIcon(true)
                 } else if (state == com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerState.PAUSED) {
-                    isPlaying = false
+                    isPlaying = false // 修复点：修改 var 变量
                     updatePlayIcon(false)
                 }
             }
